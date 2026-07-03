@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Sync App",
+    "slug": "sync-app-mobile",
+    "version": "1.0.0",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "platforms": ["ios", "android", "web"],
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.syncapp.mobile"
+    },
+    "android": {
+      "package": "com.syncapp.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

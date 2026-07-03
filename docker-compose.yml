@@ -1,0 +1,43 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: sync-app-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-changeme}
+      MYSQL_DATABASE: ${DB_NAME:-sync_app}
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-changeme}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: sync-app-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: ${DB_PASSWORD:-changeme}
+      DB_NAME: ${DB_NAME:-sync_app}
+      DB_CONNECTION_LIMIT: 10
+      JWT_SECRET: ${JWT_SECRET:-cambia_este_secreto_en_produccion}
+      JWT_EXPIRES_IN: 8h
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-otro_secreto_para_refresh_tokens}
+      JWT_REFRESH_EXPIRES_IN: 7d
+    ports:
+      - "3000:3000"
+
+volumes:
+  db_data:
