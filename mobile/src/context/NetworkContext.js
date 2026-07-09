@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import NetworkService from "../services/NetworkService";
 import SyncService from "../services/SyncService";
+import { useNotification } from "./NotificationContext";
 
 const NetworkContext = createContext({ online: true, sincronizando: false });
 
@@ -8,6 +9,7 @@ export function NetworkProvider({ children }) {
   const [online, setOnline] = useState(true);
   const [sincronizando, setSincronizando] = useState(false);
   const [ultimoResumen, setUltimoResumen] = useState(null);
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     NetworkService.isOnline().then(setOnline);
@@ -16,7 +18,8 @@ export function NetworkProvider({ children }) {
       setOnline(isOnline);
       if (isOnline) {
         setSincronizando(true);
-        const resumen = await SyncService.sincronizar();
+        if (showNotification) showNotification('Conexión restablecida. Iniciando sincronización.', 'info');
+        const resumen = await SyncService.sincronizar(showNotification);
         setUltimoResumen(resumen);
         setSincronizando(false);
       }

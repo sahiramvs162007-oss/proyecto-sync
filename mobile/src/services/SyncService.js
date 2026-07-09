@@ -4,6 +4,7 @@ import SyncRepository from '../repositories/SyncRepository';
 import PersonaRepository from '../repositories/PersonaRepository';
 import NetworkService from './NetworkService';
 import AuthService from './AuthService';
+import HistorialRepository from '../repositories/HistorialRepository';
 
 let syncing = false; // evita ejecuciones concurrentes (ej: listener de red + botón manual)
 
@@ -18,7 +19,7 @@ const SyncService = {
    * 6. Aplica cambios en SQLite local (upsert/delete)
    * 7. Resuelve conflictos según la respuesta del servidor
    */
-  async sincronizar({ strategy = 'last_write_wins' } = {}) {
+  async sincronizar(showNotification, { strategy = 'last_write_wins' } = {}) {
     if (syncing) return { skipped: true, reason: 'ya_hay_una_sincronizacion_en_curso' };
 
     // 1. Detección de conexión
@@ -61,8 +62,18 @@ const SyncService = {
             await SyncRepository.marcarSincronizado(opLocal.id);
             await LocalDataSource.markSynced(item.canonical_uuid || item.uuid);
             resumen.subidas += 1;
+
+            if (opLocal.entity === 'personas') {
+              const isUpdate = opLocal.action !== 'INSERT';
+              await HistorialRepository.logEvento({
+                persona: opLocal.payload.nombre,
+                documento: opLocal.payload.documento,
+                evento: 'Sincronización',
+                resultado: 'Exitosa',
+                descripcion: isUpdate ? `${opLocal.payload.nombre} ya se encontraba registrada. Sus datos fueron actualizados.` : `${opLocal.payload.nombre} fue sincronizada correctamente con la plataforma.`
+              });
+            }
           } else if (item.status === 'conflict_resolved_server_wins') {
-            // 7. El servidor tenía la versión más reciente: se aplica localmente su versión
             if (item.canonical_uuid && item.canonical_uuid !== item.uuid) {
               await PersonaRepository.reconciliarUuidLocal(item.uuid, item.record);
             } else {
@@ -70,9 +81,29 @@ const SyncService = {
             }
             await SyncRepository.marcarSincronizado(opLocal.id);
             resumen.conflictos += 1;
+
+            if (opLocal.entity === 'personas') {
+              await HistorialRepository.logEvento({
+                persona: opLocal.payload.nombre,
+                documento: opLocal.payload.documento,
+                evento: 'Sincronización',
+                resultado: 'Exitosa',
+                descripcion: `Conflicto resuelto: se aplicaron los datos del servidor para ${opLocal.payload.nombre}.`
+              });
+            }
           } else {
             await SyncRepository.marcarError(opLocal.id, item.message || 'Error desconocido');
             resumen.errores.push({ uuid: item.uuid, mensaje: item.message });
+
+            if (opLocal.entity === 'personas') {
+              await HistorialRepository.logEvento({
+                persona: opLocal.payload.nombre,
+                documento: opLocal.payload.documento,
+                evento: 'Error de sincronización',
+                resultado: 'Error',
+                descripcion: `No fue posible sincronizar la información. El sistema reintentará automáticamente.`
+              });
+            }
           }
         }
 
@@ -94,6 +125,14 @@ const SyncService = {
 
       // Confirma al servidor que se aplicaron los cambios, para avanzar el cursor de sync_state
       await RemoteDataSource.confirmSync(deviceId, syncedAt);
+
+      if (showNotification) {
+         if (resumen.errores.length > 0) {
+            showNotification('No fue posible sincronizar algunos registros. El sistema lo intentará nuevamente.', 'error');
+         } else if (resumen.subidas > 0 || resumen.descargas > 0 || resumen.conflictos > 0) {
+            showNotification('Sincronización completada correctamente.', 'success');
+         }
+      }
 
       return { skipped: false, ...resumen };
     } catch (err) {

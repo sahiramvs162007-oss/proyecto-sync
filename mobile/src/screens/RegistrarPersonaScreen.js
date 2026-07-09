@@ -4,6 +4,7 @@ import PersonaService from '../services/PersonaService';
 import ResponsiveContainer from '../components/ResponsiveContainer';
 import TextField from '../components/TextField';
 import Button from '../components/Button';
+import { useNotification } from '../context/NotificationContext';
 import { colors, spacing, typography } from '../theme/theme';
 
 export default function RegistrarPersonaScreen({ navigation }) {
@@ -13,14 +14,13 @@ export default function RegistrarPersonaScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const { showNotification } = useNotification();
 
   async function handleGuardar() {
     setError('');
     setLoading(true);
     try {
-      // Se guarda en el almacenamiento local (SQLite o IndexedDB) y se encola
-      // para sync de inmediato, sin importar si hay internet o no.
-      await PersonaService.registrar({ documento, nombre, telefono, email });
+      await PersonaService.registrar({ documento, nombre, telefono, email }, showNotification);
       navigation.goBack();
     } catch (err) {
       setError(err.message);

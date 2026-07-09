@@ -9,12 +9,14 @@ import { useResponsive } from '../utils/responsive';
 import ResponsiveContainer from '../components/ResponsiveContainer';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
+import { useNotification } from '../context/NotificationContext';
 import { colors, radius, spacing, shadow, typography } from '../theme/theme';
 
 export default function ListadoPersonasScreen({ navigation }) {
   const [personas, setPersonas] = useState([]);
   const { online, sincronizando } = useNetwork();
   const { columns, isDesktop } = useResponsive();
+  const { showNotification } = useNotification();
 
   const cargar = useCallback(() => {
     PersonaService.listar().then(setPersonas);
@@ -23,7 +25,7 @@ export default function ListadoPersonasScreen({ navigation }) {
   useFocusEffect(cargar);
 
   async function sincronizarManual() {
-    await SyncService.sincronizar();
+    await SyncService.sincronizar(showNotification);
     cargar();
   }
 
@@ -78,6 +80,12 @@ export default function ListadoPersonasScreen({ navigation }) {
           variant="outline"
           onPress={sincronizarManual}
           disabled={!online}
+          style={isDesktop && { flex: 0 }}
+        />
+        <Button
+          title="Historial"
+          variant="outline"
+          onPress={() => navigation.navigate('Historial')}
           style={isDesktop && { flex: 0 }}
         />
         <Button

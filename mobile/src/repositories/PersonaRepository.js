@@ -139,6 +139,18 @@ const PersonaRepository = {
     if (uuidLocalAntiguo !== personaCanonica.uuid) {
       await LocalDataSource.deletePersonaLocal(uuidLocalAntiguo);
     }
+  },
+
+  /**
+   * Guarda una persona directamente como SYNCED.
+   * Usado cuando el registro online fue exitoso.
+   */
+  async guardarPersonaSincronizada(persona) {
+    await LocalDataSource.upsertPersona({
+      ...persona,
+      sync_status: 'SYNCED'
+    });
+    return persona;
   }
 };
 

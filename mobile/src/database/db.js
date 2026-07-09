@@ -61,6 +61,19 @@ export async function initDatabase() {
       clave  TEXT PRIMARY KEY,
       valor  TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS historial (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid          TEXT UNIQUE NOT NULL,
+      fecha         TEXT NOT NULL,
+      persona       TEXT NOT NULL,
+      documento     TEXT NOT NULL,
+      evento        TEXT NOT NULL,
+      resultado     TEXT NOT NULL,
+      descripcion   TEXT NOT NULL,
+      sync_status   TEXT DEFAULT 'PENDING'
+    );
+    CREATE INDEX IF NOT EXISTS idx_historial_sync_status ON historial (sync_status);
   `);
   console.log('✅ Base de datos local inicializada');
   return db;

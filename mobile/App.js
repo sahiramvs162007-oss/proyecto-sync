@@ -5,6 +5,7 @@ import { NavigationContainer } from '@react-navigation/native';
 
 import { initDatabase } from './src/database/db';
 import { NetworkProvider } from './src/context/NetworkContext';
+import { NotificationProvider } from './src/context/NotificationContext';
 import RootNavigator from './src/navigation/RootNavigator';
 import { colors, typography } from './src/theme/theme';
 
@@ -27,10 +28,12 @@ export default function App() {
   }
 
   return (
-    <NetworkProvider>
-      <NavigationContainer>
-        <RootNavigator />
-      </NavigationContainer>
-    </NetworkProvider>
+    <NotificationProvider>
+      <NetworkProvider>
+        <NavigationContainer>
+          <RootNavigator />
+        </NavigationContainer>
+      </NetworkProvider>
+    </NotificationProvider>
   );
 }

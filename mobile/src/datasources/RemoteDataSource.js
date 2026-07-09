@@ -2,11 +2,8 @@ import axios from "axios";
 import { Platform } from "react-native";
 import LocalDataSource from "./LocalDataSource";
 
-// En el navegador (npm run web), el backend corre en la misma máquina -> localhost.
-// En un dispositivo físico (celular/tablet con Expo Go), localhost apuntaría al propio
-// dispositivo, así que ahí sí necesitas la IP de tu computador en la red Wi-Fi.
-const BASE_URL =
-  Platform.OS === "web" ? "http://localhost:3000" : "http://192.168.1.100:3000"; // <- cámbiala por la IP real de tu PC si pruebas en tablet/celular
+// URL fija para el backend en esta red.
+const BASE_URL = "http://10.81.35.99:3000";
 
 const api = axios.create({ baseURL: BASE_URL, timeout: 15000 });
 
@@ -28,6 +25,11 @@ const RemoteDataSource = {
 
   async refreshToken(refreshToken) {
     const { data } = await api.post("/auth/refresh", { refreshToken });
+    return data;
+  },
+
+  async registrarPersona(datos) {
+    const { data } = await api.post("/personas", datos);
     return data;
   },
 
