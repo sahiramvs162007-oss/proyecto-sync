@@ -1,0 +1,9 @@
+# Reemplaza "tu-dominio.com" por tu dominio real (el mismo que pones
+# en mobile/app.json -> expo.extra.apiUrl).
+# Caddy obtiene y renueva el certificado HTTPS (Let's Encrypt) solo,
+# no hay que configurar nada más: el dominio debe apuntar (registro A)
+# a la IP de este VPS antes de levantar el contenedor.
+
+syncapp.teamfusion.site {
+	reverse_proxy backend:3000
+}

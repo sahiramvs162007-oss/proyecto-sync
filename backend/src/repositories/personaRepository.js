@@ -30,12 +30,25 @@ const personaRepository = {
 
   async create(persona) {
     const { uuid, documento, nombre, telefono, email, direccion, device_id } = persona;
-    await pool.query(
-      `INSERT INTO personas (uuid, documento, nombre, telefono, email, direccion, version, device_id, deleted)
-       VALUES (?, ?, ?, ?, ?, ?, 1, ?, 0)`,
-      [uuid, documento, nombre, telefono || null, email || null, direccion || null, device_id || null]
-    );
-    return this.findByUuid(uuid);
+    try {
+      await pool.query(
+        `INSERT INTO personas (uuid, documento, nombre, telefono, email, direccion, version, device_id, deleted)
+         VALUES (?, ?, ?, ?, ?, ?, 1, ?, 0)`,
+        [uuid, documento, nombre, telefono || null, email || null, direccion || null, device_id || null]
+      );
+      return this.findByUuid(uuid);
+    } catch (err) {
+      // Condición de carrera: dos sincronizaciones casi simultáneas pasaron
+      // el "no existe" en la app antes de que cualquiera terminara de insertar.
+      // El UNIQUE de MySQL es quien realmente lo evita; aquí solo convertimos
+      // ese choque en un update sobre el registro que sí alcanzó a crearse,
+      // en vez de dejar que el error rompa la sincronización de ese dispositivo.
+      if (err.code === 'ER_DUP_ENTRY') {
+        const existente = await this.findByDocumento(documento);
+        if (existente) return this.update(existente.uuid, persona);
+      }
+      throw err;
+    }
   },
 
   async update(uuid, persona) {

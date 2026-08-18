@@ -25,8 +25,12 @@ const personasController = {
 
   async create(req, res) {
     try {
-      const persona = await personaService.create(req.body, getDeviceId(req));
-      res.status(201).json(persona);
+      const result = await personaService.create(req.body, getDeviceId(req));
+      if (result.isNew) {
+        res.status(201).json(result);
+      } else {
+        res.status(200).json(result);
+      }
     } catch (err) {
       res.status(err.status || 500).json({ error: err.message });
     }

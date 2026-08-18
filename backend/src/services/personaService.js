@@ -40,7 +40,8 @@ const personaService = {
     if (data.documento) {
       const duplicate = await personaRepository.findByDocumento(data.documento);
       if (duplicate) {
-        return this.update(duplicate.uuid, data, device_id);
+        const updated = await this.update(duplicate.uuid, data, device_id);
+        return { persona: updated, isNew: false };
       }
     }
 
@@ -61,7 +62,7 @@ const personaService = {
       payload: persona,
       device_id
     });
-    return persona;
+    return { persona, isNew: true };
   },
 
   async update(uuid, data, device_id) {

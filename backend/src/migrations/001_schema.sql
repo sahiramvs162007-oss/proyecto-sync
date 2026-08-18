@@ -26,8 +26,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS personas (
   id          INT AUTO_INCREMENT PRIMARY KEY,
-  uuid        CHAR(36)      NOT NULL UNIQUE,   -- generado en el dispositivo, es LA clave de sync
-  documento   VARCHAR(30)   NOT NULL,
+  uuid        CHAR(36)      NOT NULL UNIQUE,   -- identificador técnico interno para sincronización
+  documento   VARCHAR(30)   NOT NULL UNIQUE,   -- cédula: identidad REAL de la persona en todo el sistema
   nombre      VARCHAR(150)  NOT NULL,
   telefono    VARCHAR(30)   NULL,
   email       VARCHAR(150)  NULL,
@@ -37,7 +37,6 @@ CREATE TABLE IF NOT EXISTS personas (
   deleted     TINYINT(1)    NOT NULL DEFAULT 0, -- soft delete (obligatorio en offline-first)
   created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX idx_documento (documento),
   INDEX idx_updated_at (updated_at),
   INDEX idx_deleted (deleted)
 ) ENGINE=InnoDB;

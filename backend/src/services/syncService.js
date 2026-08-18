@@ -52,6 +52,16 @@ const syncService = {
     for (const op of operations) {
       try {
         const uuid = op.uuid && isUuid(op.uuid) ? op.uuid : uuidv4();
+
+        if (op.entity === 'historial') {
+          const historialRepository = require('../repositories/historialRepository');
+          if (op.action === 'INSERT') {
+            await historialRepository.logEvento({ ...op.payload, device_id });
+            results.push({ uuid, status: 'synced', action: 'INSERT' });
+          }
+          continue;
+        }
+
         const existing = await personaRepository.findByUuid(uuid);
 
         if (op.action === 'DELETE') {

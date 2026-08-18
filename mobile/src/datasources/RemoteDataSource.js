@@ -1,9 +1,31 @@
 import axios from "axios";
+import Constants from "expo-constants";
 import { Platform } from "react-native";
 import LocalDataSource from "./LocalDataSource";
 
-// URL fija para el backend en esta red.
-const BASE_URL = "http://10.81.35.99:3000";
+// Resuelve la URL del backend automáticamente:
+// 1) Si hay una URL fija definida en app.json -> extra.apiUrl (backend en el
+//    VPS/dominio), esa es SIEMPRE la que se usa. Es lo que se usa en producción
+//    y también en desarrollo si prefieres apuntar siempre al servidor real.
+// 2) Si no hay apiUrl definida, se usa la IP que el propio Expo detecta para
+//    el bundler (Metro) en desarrollo -> sirve para probar contra un backend
+//    corriendo en tu máquina, sin tener que hardcodear ninguna IP.
+// 3) Último recurso: localhost (solo sirve en Web).
+function resolveBaseUrl() {
+  const fromExtra = Constants.expoConfig?.extra?.apiUrl;
+  if (fromExtra) return fromExtra;
+
+  const hostUri =
+    Constants.expoConfig?.hostUri || Constants.expoGoConfig?.debuggerHost;
+  if (hostUri) {
+    const host = hostUri.split(":")[0];
+    return `http://${host}:3000`;
+  }
+
+  return "http://localhost:3000";
+}
+
+const BASE_URL = resolveBaseUrl();
 
 const api = axios.create({ baseURL: BASE_URL, timeout: 15000 });
 
